@@ -71,4 +71,10 @@ order by 5
 /
 find blocked sessions in oracle - table-locked
 
+Query to kill a session inside Oracle
+
+SQL> alter system kill session '38,4245';
+
+--actual syntax
+SQL> alter system kill session 'SID,Serial#';
 
