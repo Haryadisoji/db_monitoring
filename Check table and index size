@@ -1,0 +1,14 @@
+--CHECK TABLE SIZE 
+select s.owner, s.segment_name, s.segment_type, sum(s.bytes/1024/1024/1024) "Size in GB" from dba_segments s, dba_tables t where s.segment_name = t.table_name and s.owner = t.owner and s.segment_type in ('TABLE','TABLE PARTITION') and s.segment_name = 'GL_JE_LINES' group by s.owner, s.segment_name, s.segment_type; 
+
+--CHECK INDEX SIZE 
+SELECT idx.table_name, idx.index_name, SUM(bytes)/1024/1024/1024 GB   FROM dba_segments seg,        dba_indexes idx   WHERE idx.table_owner = 'GL'     AND idx.table_name IN ('GL_JE_LINES')     AND idx.owner       = seg.owner     AND idx.index_name  = seg.segment_name   GROUP BY idx.index_name, idx.table_name;         
+
+--CHECK NUM ROWS STATISTIC VS ACTUAL 
+SELECT TABLE_NAME, NUM_ROWS, LAST_ANALYZED FROM DBA_TABLES WHERE TABLE_NAME = 'GL_JE_LINES'; --75178790 SELECT COUNT(*) FROM GL.GL_JE_LINES; --88523903 
+
+--CHECK OPERATION PLAN
+SELECT OPERATION, COUNT(*) FROM V$SQL_PLAN WHERE OBJECT_NAME = 'GL_JE_LINES' GROUP BY OPERATION; 
+
+--CHECK TABLE GROWTH 
+SELECT    TO_CHAR(s.begin_interval_time,'YYYY-MM-DD') snap_date,   ROUND(SUM(h.space_used_delta)/1024/1024/1024,2) growth_gb FROM dba_hist_seg_stat h JOIN dba_hist_snapshot s ON h.snap_id = s.snap_id JOIN dba_objects o ON h.obj# = o.object_id WHERE o.object_name = 'GL_JE_LINES' GROUP BY TO_CHAR(s.begin_interval_time,'YYYY-MM-DD') ORDER BY snap_date;  
